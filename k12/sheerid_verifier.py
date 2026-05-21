@@ -141,13 +141,21 @@ class SheerIDVerifier:
             logger.info(f"生日: {birth_date}")
             logger.info(f"验证 ID: {self.verification_id}")
 
-            # 生成教师证明 PDF + PNG
-            logger.info("步骤 1/4: 生成教师证明 PDF 和 PNG...")
+            # 生成教师证明（PDF 必须；PNG 可选，若环境无浏览器则自动降级）
+            logger.info("步骤 1/4: 生成教师证明文档...")
             pdf_data = generate_teacher_pdf(first_name, last_name)
-            png_data = generate_teacher_png(first_name, last_name)
             pdf_size = len(pdf_data)
-            png_size = len(png_data)
-            logger.info(f"✓ PDF 大小: {pdf_size / 1024:.2f}KB, PNG 大小: {png_size / 1024:.2f}KB")
+            png_data = None
+            png_size = 0
+
+            try:
+                png_data = generate_teacher_png(first_name, last_name)
+                png_size = len(png_data)
+                logger.info(f"✓ PDF 大小: {pdf_size / 1024:.2f}KB, PNG 大小: {png_size / 1024:.2f}KB")
+            except Exception as png_error:
+                # 打包环境可能缺少 Playwright 浏览器；此时走 PDF-only，保证流程可继续。
+                logger.warning(f"PNG 生成失败，自动降级为仅上传 PDF: {png_error}")
+                logger.info(f"✓ PDF 大小: {pdf_size / 1024:.2f}KB")
 
             # 步骤 2: 提交教师信息
             logger.info("步骤 2/4: 提交教师信息...")
@@ -200,20 +208,23 @@ class SheerIDVerifier:
 
             # 步骤 4: 上传文档并完成提交
             logger.info("步骤 4/4: 请求并上传文档...")
-            step4_body = {
-                'files': [
-                    {
-                        'fileName': 'teacher_document.pdf',
-                        'mimeType': 'application/pdf',
-                        'fileSize': pdf_size
-                    },
+            files = [
+                {
+                    'fileName': 'teacher_document.pdf',
+                    'mimeType': 'application/pdf',
+                    'fileSize': pdf_size
+                }
+            ]
+            if png_data is not None:
+                files.append(
                     {
                         'fileName': 'teacher_document.png',
                         'mimeType': 'image/png',
                         'fileSize': png_size
                     }
-                ]
-            }
+                )
+
+            step4_body = {'files': files}
 
             step4_data, step4_status = self._sheerid_request(
                 'POST',
@@ -222,18 +233,19 @@ class SheerIDVerifier:
             )
 
             documents = step4_data.get('documents') or []
-            if len(documents) < 2:
-                raise Exception("未能获取上传 URL")
+            if len(documents) < len(files):
+                raise Exception("未能获取足够的上传 URL")
 
-            pdf_upload_url = documents[0]['uploadUrl']
-            png_upload_url = documents[1]['uploadUrl']
             logger.info("✓ 获取上传 URL 成功")
-
-            if not self._upload_to_s3(pdf_upload_url, pdf_data, 'application/pdf'):
+            if not self._upload_to_s3(documents[0]['uploadUrl'], pdf_data, 'application/pdf'):
                 raise Exception("PDF 上传失败")
-            if not self._upload_to_s3(png_upload_url, png_data, 'image/png'):
-                raise Exception("PNG 上传失败")
-            logger.info("✓ 教师证明 PDF/PNG 上传成功")
+
+            if png_data is not None:
+                if not self._upload_to_s3(documents[1]['uploadUrl'], png_data, 'image/png'):
+                    raise Exception("PNG 上传失败")
+                logger.info("✓ 教师证明 PDF/PNG 上传成功")
+            else:
+                logger.info("✓ 教师证明 PDF 上传成功（PNG 已降级跳过）")
 
             step6_data, _ = self._sheerid_request(
                 'POST',
