@@ -7,14 +7,30 @@ from pathlib import Path
 from xhtml2pdf import pisa
 
 
+def _load_template_text() -> str:
+    """Load HTML template reliably in source and bundled runtime."""
+    candidate_paths = [
+        Path(__file__).resolve().parent / "card-temp.html",
+        Path.cwd() / "k12" / "card-temp.html",
+    ]
+
+    for path in candidate_paths:
+        if path.exists():
+            return path.read_text(encoding="utf-8")
+
+    raise FileNotFoundError(
+        "card-temp.html not found. Ensure build bundles k12/card-temp.html. "
+        f"Checked: {candidate_paths}"
+    )
+
+
 def _render_template(first_name: str, last_name: str) -> str:
     """读取模板，替换姓名/工号/日期，并展开 CSS 变量。"""
     full_name = f"{first_name} {last_name}"
     employee_id = random.randint(1000000, 9999999)
     current_date = datetime.now().strftime("%m/%d/%Y %I:%M %p")
 
-    template_path = Path(__file__).parent / "card-temp.html"
-    html = template_path.read_text(encoding="utf-8")
+    html = _load_template_text()
 
     # 展开 CSS 变量，兼容 xhtml2pdf
     color_map = {
