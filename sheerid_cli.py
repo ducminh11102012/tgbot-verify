@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import sys
 from dataclasses import dataclass
 from typing import Callable, Dict, Type
 
@@ -86,4 +87,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    # No args => start GUI for easier double-click EXE usage.
+    if len(sys.argv) == 1:
+        from sheerid_gui import launch_gui
+
+        raise SystemExit(launch_gui())
     raise SystemExit(main())

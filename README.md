@@ -227,6 +227,11 @@ python sheerid_cli.py k12 "<your_url>" --json
 
 支持目标：`one` `k12` `spotify` `bolt` `youtube`。
 
+
+> ⚡ EXE 启动优化：Windows 工作流改为 `--onedir` GUI 模式（双击即开窗口），启动速度明显快于 `--onefile`。
+>
+> 日志会实时显示在 GUI 的 Logs 区域。
+
 ---
 
 ## 🤝 联系与合作
