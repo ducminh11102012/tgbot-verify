@@ -26,7 +26,7 @@ jobs:
 
       - name: Build executable
         run: |
-          pyinstaller --noconfirm --onefile --name sheerid-cli sheerid_cli.py
+          pyinstaller --noconfirm --onefile --name sheerid-cli --collect-all reportlab --collect-all xhtml2pdf sheerid_cli.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
