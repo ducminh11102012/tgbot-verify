@@ -5,15 +5,9 @@ import logging
 import httpx
 from typing import Dict, Optional, Tuple
 
-# 支持既作为包导入又直接脚本运行
-try:
-    from . import config  # type: ignore
-    from .name_generator import NameGenerator, generate_email, generate_birth_date  # type: ignore
-    from .img_generator import generate_teacher_pdf, generate_teacher_png  # type: ignore
-except ImportError:
-    import config  # type: ignore
-    from name_generator import NameGenerator, generate_email, generate_birth_date  # type: ignore
-    from img_generator import generate_teacher_pdf, generate_teacher_png  # type: ignore
+from . import config
+from .name_generator import NameGenerator, generate_email, generate_birth_date
+from .img_generator import generate_teacher_pdf, generate_teacher_png
 
 # 导入配置常量
 PROGRAM_ID = config.PROGRAM_ID
