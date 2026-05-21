@@ -215,6 +215,18 @@ INVITE_REWARD = 2      # 邀请奖励
 REGISTER_REWARD = 1    # 注册奖励
 ```
 
+
+## 🖥️ 直接 EXE 模式（无 Telegram / 无积分）
+
+新增 `sheerid_cli.py`，可直接在命令行或打包后的 EXE 中运行认证流程，不再依赖 Telegram Bot、用户注册、余额/积分逻辑。
+
+```bash
+python sheerid_cli.py spotify "https://services.sheerid.com/verify/...verificationId=..."
+python sheerid_cli.py k12 "<your_url>" --json
+```
+
+支持目标：`one` `k12` `spotify` `bolt` `youtube`。
+
 ---
 
 ## 🤝 联系与合作
